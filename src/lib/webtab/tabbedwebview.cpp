@@ -46,6 +46,14 @@ TabbedWebView::TabbedWebView(WebTab* webTab)
     connect(this, SIGNAL(loadStarted()), this, SLOT(slotLoadStarted()));
     connect(this, SIGNAL(loadProgress(int)), this, SLOT(slotLoadProgress(int)));
     connect(this, SIGNAL(loadFinished(bool)), this, SLOT(slotLoadFinished()));
+    QPalette pal2 = this->palette();
+
+    // set black background
+    pal2.setBrush(QPalette::Base, Qt::red);
+    pal2.setColor(QPalette::Background, Qt::red);
+    // this->setAttribute(Qt::WA_TranslucentBackground);
+    // this->setAutoFillBackground(true);
+    this->setPalette(pal2);
 }
 
 void TabbedWebView::setPage(WebPage* page)

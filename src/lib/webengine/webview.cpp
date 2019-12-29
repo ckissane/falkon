@@ -51,6 +51,7 @@
 #include <QPrinter>
 #include <QQuickWidget>
 #include <QtWebEngineWidgetsVersion>
+#include <QOpenGLWidget>
 
 bool WebView::s_forceContextMenuOnMouseRelease = false;
 
@@ -61,6 +62,29 @@ WebView::WebView(QWidget* parent)
     , m_page(0)
     , m_firstLoad(false)
 {
+    QPalette palette = this->palette();
+    palette.setBrush(QPalette::Base, Qt::red);
+    
+    this->setPalette(palette);
+    
+    QPalette pal2 = this->palette();
+
+    // set black background
+    pal2.setColor(QPalette::Background, Qt::red);
+    //this->setAttribute(Qt::WA_OpaquePaintEvent, false);
+    // this->setAttribute(Qt::WA_TranslucentBackground);
+    // this->setAutoFillBackground(true);
+    this->setPalette(pal2);
+    QWebEngineView* webEngineView=this;
+    // webEngineView->setAttribute(Qt::WA_TranslucentBackground);
+    webEngineView->setAttribute(Qt::WA_TranslucentBackground);
+    // webEngineView->setStyleSheet("background:transparent");
+    webEngineView->setStyleSheet("background:transparent");
+
+    // webEngineView->page()->setBackgroundColor(Qt::red);
+    webEngineView->page()->setBackgroundColor(Qt::transparent);
+    // auto openGLWidget =webEngineView->findChild<QOpenGLWidget *>();
+    // openGLWidget->setAttribute(Qt::WA_AlwaysStackOnTop, false);
     connect(this, &QWebEngineView::loadStarted, this, &WebView::slotLoadStarted);
     connect(this, &QWebEngineView::loadProgress, this, &WebView::slotLoadProgress);
     connect(this, &QWebEngineView::loadFinished, this, &WebView::slotLoadFinished);
@@ -76,6 +100,7 @@ WebView::WebView(QWidget* parent)
         parentWidget()->installEventFilter(this);
     }
 
+    
     WebInspector::registerView(this);
 }
 

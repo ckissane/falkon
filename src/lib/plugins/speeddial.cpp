@@ -56,7 +56,7 @@ void SpeedDial::loadSettings()
     Settings settings;
     settings.beginGroup("SpeedDial");
     QString allPages = settings.value("pages", QString()).toString();
-    setBackgroundImage(settings.value("background", QString()).toString());
+    //setBackgroundImage(settings.value("background", QString()).toString());
     m_backgroundImageSize = settings.value("backsize", "auto").toString();
     m_maxPagesInRow = settings.value("pagesrow", 4).toInt();
     m_sizeOfSpeedDials = settings.value("sdsize", 231).toInt();
@@ -80,7 +80,7 @@ void SpeedDial::saveSettings()
     Settings settings;
     settings.beginGroup("SpeedDial");
     settings.setValue("pages", generateAllPages());
-    settings.setValue("background", m_backgroundImageUrl);
+    settings.setValue("background", "transparent");//m_backgroundImageUrl);
     settings.setValue("backsize", m_backgroundImageSize);
     settings.setValue("pagesrow", m_maxPagesInRow);
     settings.setValue("sdsize", m_sizeOfSpeedDials);

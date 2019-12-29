@@ -304,6 +304,7 @@ void WebPage::finished()
 
     // AutoFill
     m_autoFillUsernames = mApp->autoFill()->completePage(this, url());
+    this->setBackgroundColor(Qt::transparent);
 }
 
 void WebPage::watchedFileChanged(const QString &file)
@@ -702,6 +703,7 @@ void WebPage::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, cons
 
 QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType type)
 {
+    this->setBackgroundColor(Qt::transparent);
     TabbedWebView *tView = qobject_cast<TabbedWebView*>(view());
     BrowserWindow *window = tView ? tView->browserWindow() : mApp->getWindow();
 

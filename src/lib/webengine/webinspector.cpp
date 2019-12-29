@@ -35,6 +35,16 @@ WebInspector::WebInspector(QWidget *parent)
     : QWebEngineView(parent)
     , m_view(Q_NULLPTR)
 {
+    // QPalette pal2 = this->palette();
+
+    // // set black background
+    // pal2.setColor(QPalette::Background, Qt::red);
+
+    // pal2.setBrush(QPalette::Base, Qt::red);
+    // //this->setAttribute(Qt::WA_OpaquePaintEvent, false);
+    // this->setAttribute(Qt::WA_TranslucentBackground);
+    // this->setAutoFillBackground(true);
+    // this->setPalette(pal2);
     setAttribute(Qt::WA_DeleteOnClose);
     setObjectName(QSL("web-inspector"));
     setMinimumHeight(80);

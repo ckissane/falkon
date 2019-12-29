@@ -206,6 +206,9 @@ BrowserWindow::BrowserWindow(Qz::BrowserWindowType type, const QUrl &startUrl)
     setProperty("private", mApp->isPrivate());
 
     setupUi();
+    setAttribute(Qt::WA_TranslucentBackground);
+    setAutoFillBackground(true);
+    // setWindowFlags(Qt::FramelessWindowHint);
     setupMenu();
 
     m_hideNavigationTimer = new QTimer(this);
@@ -432,6 +435,10 @@ void BrowserWindow::setupUi()
     }
 
     restoreUiState(uiState);
+    QPalette palette = this->palette();
+    palette.setBrush(QPalette::Base, Qt::red);
+    this->setPalette(palette);
+    this->setAttribute(Qt::WA_OpaquePaintEvent, false);
 
     // Set some sane minimum width
     setMinimumWidth(300);

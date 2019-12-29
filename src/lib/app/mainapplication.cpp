@@ -1155,7 +1155,7 @@ void MainApplication::setUserStyleSheet(const QString &filePath)
 #endif
 
     userCss += QzTools::readAllFileContents(filePath).remove(QLatin1Char('\n'));
-
+    userCss += QString("webview {background:transparent;}");
     const QString name = QStringLiteral("_falkon_userstylesheet");
 
     QWebEngineScript oldScript = m_webProfile->scripts()->findScript(name);

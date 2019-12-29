@@ -153,8 +153,18 @@ WebTab::WebTab(QWidget *parent)
     m_layout->setSpacing(0);
     m_layout->addWidget(m_webView);
 
+    
+
     QWidget *viewWidget = new QWidget(this);
     viewWidget->setLayout(m_layout);
+    QPalette pal2 = viewWidget->palette();
+
+    // set black background
+    pal2.setColor(QPalette::Background, Qt::red);
+    pal2.setBrush(QPalette::Base, Qt::red);
+    //viewWidget->setAttribute(Qt::WA_TranslucentBackground);
+    //viewWidget->setAutoFillBackground(true);
+    viewWidget->setPalette(pal2);
 
     m_splitter = new QSplitter(Qt::Vertical, this);
     m_splitter->setChildrenCollapsible(false);
