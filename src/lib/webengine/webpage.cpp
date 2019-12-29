@@ -305,6 +305,155 @@ void WebPage::finished()
     // AutoFill
     m_autoFillUsernames = mApp->autoFill()->completePage(this, url());
     this->setBackgroundColor(Qt::transparent);
+    const char * transparencyScript = R"V(
+    (function () {
+    var v = document.createElement("style");
+    v.innerHTML = "body,html,.darkmode-background,.darkmode-layer,html,.trans:not(.quaz),html[dark]{background:transparent !important;}::-webkit-scrollbar {    background-color:#ffffff00;    width:8px;height:8px;}::-webkit-scrollbar-track {    background-color:#ffffff00;width:16px;height:16px;}::-webkit-scrollbar-thumb {    background-color:#babac080;    border-radius:8px;    border:4px solid transparent}::-webkit-scrollbar-button {display:none} .bblur{background:rgba(49, 49, 58,0.2) !important;}";
+    document.body.append(v);
+
+    function getBkColor(el) {
+        var c = window.getComputedStyle(el, null).getPropertyValue("background-color");
+        var mt = /\d+/g;
+        if (c.match(mt)) {
+            var q = c.match(mt).map(parseFloat);
+            return q.length < 4 ? q.concat([1]) : q;
+        }
+        return [0, 0, 0, 0];
+    }
+
+    function bkInfluence(e) {
+        if (!e.parentElement) {
+            return 0;
+        }
+        var a = getBkColor(e);
+        var b = getBkColor(e.parentElement);
+        var diff = [Math.abs(a[0] - b[0]) / 255, Math.abs(a[1] - b[1]) / 255, Math.abs(a[2] - b[2]) / 255];
+        return (diff[0] + diff[2] + diff[2]) * a[3] / 3;
+    }
+
+    function shouldT(e) {
+        var c = window.getComputedStyle(e, null).getPropertyValue("background-color");
+        var mt = /\d+/g;
+        if (c.match(mt)) {
+            var cc = c.match(mt).map(parseFloat);
+            var tcond = (!(cc.length > 3 && cc[3] < 0.25) || e.classList.contains("trans"));
+            if (cc[0] + cc[1] + cc[2] > 127 * 3 || tcond) {
+                if (tcond && e.parentElement) {
+                    return !shouldT(e.parentElement);
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function colorWild(color) {
+        var ave = (color[0] + color[1] + color[2]) / 255 / 3;
+        var st = (color.slice(0, 3).map(x => (x / 255 - ave) ** 2).reduce((a, b) => a + b) / 2) ** 0.5;
+        return st;
+    }
+    var tim = 0;
+
+    function magicWandTheme() {
+        tim += 1;
+        var all = document.querySelectorAll(tim % 10 === 0 ? "*" : "*:not(.dark-checked)");
+        for (var i = 0; i < all.length; i++) {
+            var e = all[i];
+            e.classList.add("dark-checked");
+            var c = window.getComputedStyle(e, null).getPropertyValue("background-color");
+            var bi = window.getComputedStyle(e, null).getPropertyValue("background-image");
+            var cd = window.getComputedStyle(e, null).getPropertyValue("position");
+            var mt = /\d+/g;
+            if (c.match(mt)) {
+                var cc = c.match(mt).map(parseFloat);
+                if (cc[0] + cc[1] + cc[2] < 127 * 3 / 4) {
+                    e.style.backgroundColor = "rgba(0,0,0,0)";
+                    if (!(cc.length > 3 && cc[3] < 0.25)) {
+                        e.classList.add("trans")
+                    }
+                }
+                if (e.classList.contains("docos-avatar")) {
+                    e.style.zIndex = 1; //fix google doc avatar
+                }
+                if (shouldT(e) || (bkInfluence(e) < 1 / 3 || cc[0] + cc[1] + cc[2] > 127 * 3 || (e.style.backgroundImage.substring(0, "linear-gradient".length) == "linear-gradient"))) { //||(cc.length>3&&cc[3]<0.25)){
+                    //e.style.backgroundColor="rgba(0,0,0,0)";
+                    e.style.backgroundColor = "rgba(" + cc[0] + "," + cc[1] + "," + cc[2] + "," + Math.max(colorWild(cc), 0) + ")";
+                    if (cc.length < 4 && colorWild(cc) > 0.125) {
+                        e.classList.add("quaz")
+                    }
+                    if (!(cc.length > 3 && cc[3] < 0.25)) {
+                        e.classList.add("trans")
+                    }
+                    if (!(bi.length > 3 && (bi.substring(0, 3) === "non"))) { //||bi.substring(0,3)==="url"))){
+                        // console.log(e.style.backgroundImage.substring(0,3));
+                        if (bi.match("gradient") || e.webkitMatchesSelector(".vectorTabs li")) { //}.substring(0,"linear-gradient".length)=="linear-gradient"||e.webkitMatchesSelector(".vectorTabs li")  ){
+                            e.style.backgroundImage = "none";
+                        }
+                    }
+
+                    var tcond = (!(cc.length > 3 && cc[3] < 0.25) || e.classList.contains("trans"));
+                    //console.log(tcond);
+                    if (tcond || e.tagName.toLowerCase() !== "span" || true && !(e.webkitMatchesSelector("pre code span"))) e.style.color = "rgba(255,255,255,1)";
+                    var nt = bkInfluence(e) > 1 / 2 || e.style.boxShadow != "none";
+                    if (tcond && ((cd === "absolute" || cd === "fixed" || cd === "sticky" || !(e.parentElement && shouldT(e.parentElement))) || (nt && !(e.parentElement && shouldT(e.parentElement))))) {
+                        if ((!(e.parentElement && e.parentElement.innerText && e.parentElement.innerText.length < e.innerText.length + 2) || nt) &&
+                            (!e.webkitMatchesSelector("ytd-app,ytd-watch-flexy"))) {
+                            //console.log(e.style);
+                            e.style.backdropFilter = "blur(5px) opacity(0.8)";
+                            //if(cc[0]+cc[1]+cc[2]<255*3/2){
+                                e.classList.add("bblur");
+                            e.style.backdropFilter = "opacity(" + (1 - Math.abs((cc[0] + cc[1] + cc[2]) / 255 / 3 - 0.5) / 5 * 2) + ") blur(5px)";
+                            //}
+                            if (cc.length < 4) {
+                                e.style.backgroundColor = "rgba(" + cc[0] + "," + cc[1] + "," + cc[2] + "," + Math.max(colorWild(cc), 0) + ")";
+                                if (colorWild(cc) > 0.125) e.classList.add("quaz")
+                            }
+                            e.style.boxShadow = "none";
+                        }
+                    }
+                }
+            }
+            var c = window.getComputedStyle(e, null).getPropertyValue("border-left-color");
+            var mt = /\d+/g;
+            if (c.match(mt)) {
+                var cc = c.match(mt).map(parseFloat);
+                if (cc[0] + cc[1] + cc[2] > 127 * 3 && (cc.length < 4 || cc[3] > 0.25)) {
+                    e.style.borderLeftColor = "rgb(255,255,255)";
+                }
+            }
+            var c = window.getComputedStyle(e, null).getPropertyValue("border-right-color");
+            var mt = /\d+/g;
+            if (c.match(mt)) {
+                var cc = c.match(mt).map(parseFloat);
+                if (cc[0] + cc[1] + cc[2] > 127 * 3 && (cc.length < 4 || cc[3] > 0.25)) {
+                    e.style.borderRightColor = "rgb(255,255,255)";
+                }
+            }
+            var c = window.getComputedStyle(e, null).getPropertyValue("border-top-color");
+            var mt = /\d+/g;
+            if (c.match(mt)) {
+                var cc = c.match(mt).map(parseFloat);
+                if (cc[0] + cc[1] + cc[2] > 127 * 3 && (cc.length < 4 || cc[3] > 0.25)) {
+                    e.style.borderTopColor = "rgb(255,255,255)";
+                }
+            }
+            var c = window.getComputedStyle(e, null).getPropertyValue("border-bottom-color");
+            var mt = /\d+/g;
+            if (c.match(mt)) {
+                var cc = c.match(mt).map(parseFloat);
+                if (cc[0] + cc[1] + cc[2] > 127 * 3 && (cc.length < 4 || cc[3] > 0.25)) {
+                    e.style.borderBottomColor = "rgb(255,255,255)";
+                }
+            }
+        }
+    }
+    window.setInterval(magicWandTheme, 10);
+    //var v2=document.createElement("script");
+    //v2.src="https://cdn.jsdelivr.net/npm/darkmode-js@1.5.3/lib/darkmode-js.min.js";
+    //document.body.append(v2);
+    //window.setTimeout(()=>{window.dark=new Darkmode();if(!window.dark.isActivated()){window.dark.toggle();}},1000);
+})();)V";
+    this->runJavaScript(QString::fromUtf8(transparencyScript));
 }
 
 void WebPage::watchedFileChanged(const QString &file)

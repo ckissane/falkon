@@ -63,21 +63,21 @@ WebView::WebView(QWidget* parent)
     , m_firstLoad(false)
 {
     QPalette palette = this->palette();
-    palette.setBrush(QPalette::Base, Qt::red);
+    palette.setBrush(QPalette::Base, Qt::transparent);
     
     this->setPalette(palette);
     
     QPalette pal2 = this->palette();
 
-    // set black background
-    pal2.setColor(QPalette::Background, Qt::red);
-    //this->setAttribute(Qt::WA_OpaquePaintEvent, false);
-    // this->setAttribute(Qt::WA_TranslucentBackground);
-    // this->setAutoFillBackground(true);
+    pal2.setColor(QPalette::Background, Qt::transparent);
+    this->setAutoFillBackground(true);
     this->setPalette(pal2);
     QWebEngineView* webEngineView=this;
     // webEngineView->setAttribute(Qt::WA_TranslucentBackground);
     webEngineView->setAttribute(Qt::WA_TranslucentBackground);
+    palette.setBrush(QPalette::Base, Qt::transparent);
+    webEngineView->setAttribute(Qt::WA_OpaquePaintEvent, false);
+
     // webEngineView->setStyleSheet("background:transparent");
     webEngineView->setStyleSheet("background:transparent");
 
