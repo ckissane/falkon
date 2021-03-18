@@ -85,8 +85,8 @@ CookieManager::CookieManager(QWidget *parent)
     ui->cookieTree->header()->setDefaultSectionSize(220);
     ui->cookieTree->setFocus();
 
-    ui->whiteList->setSortingEnabled(true);
-    ui->blackList->setSortingEnabled(true);
+    ui->whiteList->sortItems(Qt::AscendingOrder);
+    ui->blackList->sortItems(Qt::AscendingOrder);
 
     QShortcut* removeShortcut = new QShortcut(QKeySequence("Del"), this);
     connect(removeShortcut, &QShortcut::activated, this, &CookieManager::deletePressed);
@@ -96,8 +96,10 @@ CookieManager::CookieManager(QWidget *parent)
     connect(mApp->cookieJar(), &CookieJar::cookieRemoved, this, &CookieManager::removeCookie);
 
     // Load cookies
-    foreach (const QNetworkCookie &cookie, mApp->cookieJar()->getAllCookies())
+    const auto allCookies = mApp->cookieJar()->getAllCookies();
+    for (const QNetworkCookie &cookie : allCookies) {
         addCookie(cookie);
+    }
 
     QzTools::setWmClass("Cookies", this);
 }
@@ -137,7 +139,7 @@ void CookieManager::remove()
         }
     }
 
-    foreach (const QNetworkCookie &cookie, cookies) {
+    for (const QNetworkCookie &cookie : qAsConst(cookies)) {
         mApp->cookieJar()->deleteCookie(cookie);
     }
 }

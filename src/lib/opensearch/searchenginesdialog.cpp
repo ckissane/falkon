@@ -43,7 +43,7 @@ SearchEnginesDialog::SearchEnginesDialog(QWidget* parent)
     connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &SearchEnginesDialog::editEngine);
 
     ui->treeWidget->setItemDelegate(new RemoveItemFocusDelegate(ui->treeWidget));
-    ui->treeWidget->sortByColumn(-1);
+    ui->treeWidget->sortByColumn(-1, Qt::AscendingOrder);
     reloadEngines();
 }
 
@@ -221,7 +221,8 @@ void SearchEnginesDialog::reloadEngines()
     ui->treeWidget->clear();
     const SearchEngine defaultEngine = mApp->searchEnginesManager()->defaultEngine();
 
-    foreach (const SearchEngine &en, m_manager->allEngines()) {
+    const auto engines = m_manager->allEngines();
+    for (const SearchEngine &en : engines) {
         QTreeWidgetItem* item = new QTreeWidgetItem();
         setEngine(item, en);
         changeItemToDefault(item, en == defaultEngine);

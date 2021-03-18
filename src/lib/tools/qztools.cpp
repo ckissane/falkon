@@ -25,6 +25,7 @@
 #include <QByteArray>
 #include <QPixmap>
 #include <QPainter>
+#include <QPainterPath>
 #include <QBuffer>
 #include <QFile>
 #include <QDir>
@@ -41,6 +42,7 @@
 #include <QProcess>
 #include <QMessageBox>
 #include <QUrlQuery>
+#include <QtGuiVersion>
 
 #ifdef QZ_WS_X11
 #include <QX11Info>
@@ -142,7 +144,7 @@ bool QzTools::removeRecursively(const QString &filePath)
     }
     if (fileInfo.isDir() && !fileInfo.isSymLink()) {
         QDir dir(filePath);
-        dir = dir.canonicalPath();
+        dir.setPath(dir.canonicalPath());
         if (dir.isRoot() || dir.path() == QDir::home().canonicalPath()) {
             qCritical() << "Attempt to remove root/home directory" << dir;
             return false;
@@ -395,7 +397,11 @@ QPixmap QzTools::createPixmapForSite(const QIcon &icon, const QString &title, co
 {
     const QFontMetrics fontMetrics = QApplication::fontMetrics();
     const int padding = 4;
+#if QTGUI_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+    const int maxWidth = fontMetrics.horizontalAdvance(title.length() > url.length() ? title : url) + 3 * padding + 16;
+#else
     const int maxWidth = fontMetrics.width(title.length() > url.length() ? title : url) + 3 * padding + 16;
+#endif
     const int width = qMin(maxWidth, 150);
     const int height = fontMetrics.height() * 2 + fontMetrics.leading() + 2 * padding;
 
@@ -515,9 +521,9 @@ QString QzTools::resolveFromPath(const QString &name)
         return QString();
     }
 
-    QStringList dirs = path.split(QLatin1Char(':'), QString::SkipEmptyParts);
+    const QStringList dirs = path.split(QLatin1Char(':'), QString::SkipEmptyParts);
 
-    foreach (const QString &dir, dirs) {
+    for (const QString &dir : dirs) {
         QDir d(dir);
         if (d.exists(name)) {
             return d.absoluteFilePath(name);
@@ -609,7 +615,7 @@ bool QzTools::isUtf8(const char* string)
 
 bool QzTools::containsSpace(const QString &str)
 {
-    Q_FOREACH (const QChar &c, str) {
+    for (const QChar &c : str) {
         if (c.isSpace())
             return true;
     }

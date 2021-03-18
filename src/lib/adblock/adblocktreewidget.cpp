@@ -207,7 +207,7 @@ void AdBlockTreeWidget::adjustItemFeatures(QTreeWidgetItem* item, const AdBlockR
 
     item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
     item->setCheckState(0, Qt::Checked);
-    item->setForeground(0, palette().foreground());
+    item->setForeground(0, palette().windowText());
     item->setFont(0, font());
 
     if (rule->isException()) {
@@ -250,7 +250,7 @@ void AdBlockTreeWidget::refresh()
     const QVector<AdBlockRule*> &allRules = m_subscription->allRules();
 
     int index = 0;
-    foreach (const AdBlockRule* rule, allRules) {
+    for (const AdBlockRule* rule : allRules) {
         QTreeWidgetItem* item = new QTreeWidgetItem(m_topItem);
         item->setText(0, rule->filter());
         item->setData(0, Qt::UserRole + 10, index);

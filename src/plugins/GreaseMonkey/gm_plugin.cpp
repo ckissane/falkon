@@ -25,6 +25,8 @@
 #include "webtab.h"
 #include "../config.h"
 
+#include <QtWebEngineWidgetsVersion>
+
 GM_Plugin::GM_Plugin()
     : QObject()
     , m_manager(0)
@@ -40,7 +42,8 @@ void GM_Plugin::init(InitState state, const QString &settingsPath)
 
     // Make sure userscripts works also with already created WebPages
     if (state == LateInitState) {
-        foreach (BrowserWindow *window, mApp->windows()) {
+        const auto windows = mApp->windows();
+        for (BrowserWindow *window : windows) {
             m_manager->mainWindowCreated(window);
         }
     }
@@ -68,7 +71,13 @@ bool GM_Plugin::acceptNavigationRequest(WebPage *page, const QUrl &url, QWebEngi
     Q_UNUSED(page)
     Q_UNUSED(isMainFrame)
 
-    if (type == QWebEnginePage::NavigationTypeLinkClicked && url.toString().endsWith(QLatin1String(".user.js"))) {
+#if QTWEBENGINEWIDGETS_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+    bool navigationType = type == QWebEnginePage::NavigationTypeLinkClicked || type == QWebEnginePage::NavigationTypeRedirect;
+#else
+    bool navigationType = type == QWebEnginePage::NavigationTypeLinkClicked;
+#endif
+
+    if (navigationType && url.toString().endsWith(QLatin1String(".user.js"))) {
         m_manager->downloadScript(url);
         return false;
     }

@@ -19,9 +19,11 @@
 #include "kdeframeworksintegrationplugin.h"
 #include "mainapplication.h"
 #include "browserwindow.h"
+#include "desktopnotificationsfactory.h"
 
 #include <QDateTime>
 
+#include <kwallet_version.h>
 #include <KWallet>
 
 static PasswordEntry decodeEntry(const QByteArray &data)
@@ -59,7 +61,7 @@ QVector<PasswordEntry> KWalletPasswordBackend::getEntries(const QUrl &url)
 
     QVector<PasswordEntry> list;
 
-    foreach (const PasswordEntry &entry, m_allEntries) {
+    for (const PasswordEntry &entry : qAsConst(m_allEntries)) {
         if (entry.host == host) {
             list.append(entry);
         }
@@ -82,6 +84,11 @@ void KWalletPasswordBackend::addEntry(const PasswordEntry &entry)
 {
     initialize();
 
+    if (!m_wallet) {
+        showErrorNotification();
+        return;
+    }
+
     PasswordEntry stored = entry;
     stored.id = QString("%1/%2").arg(entry.host, entry.username);
     stored.updated = QDateTime::currentDateTime().toTime_t();
@@ -93,6 +100,11 @@ void KWalletPasswordBackend::addEntry(const PasswordEntry &entry)
 bool KWalletPasswordBackend::updateEntry(const PasswordEntry &entry)
 {
     initialize();
+
+    if (!m_wallet) {
+        showErrorNotification();
+        return false;
+    }
 
     m_wallet->removeEntry(entry.id.toString());
     m_wallet->writeEntry(entry.id.toString(), encodeEntry(entry));
@@ -109,6 +121,11 @@ bool KWalletPasswordBackend::updateEntry(const PasswordEntry &entry)
 void KWalletPasswordBackend::updateLastUsed(PasswordEntry &entry)
 {
     initialize();
+
+    if (!m_wallet) {
+        showErrorNotification();
+        return;        
+    }
 
     m_wallet->removeEntry(entry.id.toString());
 
@@ -127,6 +144,11 @@ void KWalletPasswordBackend::removeEntry(const PasswordEntry &entry)
 {
     initialize();
 
+    if (!m_wallet) {
+        showErrorNotification();
+        return; 
+    }
+
     m_wallet->removeEntry(entry.id.toString());
 
     int index = m_allEntries.indexOf(entry);
@@ -140,10 +162,25 @@ void KWalletPasswordBackend::removeAll()
 {
     initialize();
 
+    if (!m_wallet) {
+        showErrorNotification();
+        return; 
+    }
+
     m_allEntries.clear();
 
     m_wallet->removeFolder("Falkon");
     m_wallet->createFolder("Falkon");
+}
+
+void KWalletPasswordBackend::showErrorNotification()
+{
+    static bool initialized;
+    
+    if (!initialized) {
+        initialized = true;
+        mApp->desktopNotifications()->showNotification(KDEFrameworksIntegrationPlugin::tr("KWallet disabled"), KDEFrameworksIntegrationPlugin::tr("Please enable KWallet to save password."));
+    }
 }
 
 void KWalletPasswordBackend::initialize()
@@ -184,7 +221,13 @@ void KWalletPasswordBackend::initialize()
     }
 
     QMap<QString, QByteArray> entries;
-    if (m_wallet->readEntryList("*", entries) != 0) {
+    bool ok = false;
+#if KWALLET_VERSION < QT_VERSION_CHECK(5, 72, 0)
+    ok = m_wallet->readEntryList("*", entries) == 0;
+#else
+    entries = m_wallet->entriesList(&ok);
+#endif
+    if (!ok) {
         qWarning() << "KWalletPasswordBackend::initialize Cannot read entries!";
         return;
     }
@@ -204,7 +247,7 @@ void KWalletPasswordBackend::initialize()
             return;
         }
 
-        foreach (const PasswordEntry &entry, m_allEntries) {
+        for (const PasswordEntry &entry : qAsConst(m_allEntries)) {
             m_wallet->writeEntry(entry.id.toString(), encodeEntry(entry));
         }
     }

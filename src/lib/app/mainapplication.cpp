@@ -67,6 +67,11 @@
 #include <QWebEngineScriptCollection>
 #include <QRegularExpression>
 #include <QtWebEngineWidgetsVersion>
+#include <QtWebEngineCoreVersion>
+
+#if QTWEBENGINECORE_VERSION >= QT_VERSION_CHECK(5, 13, 0)
+#include <QWebEngineNotification>
+#endif
 
 #ifdef Q_OS_WIN
 #include <QtWin>
@@ -155,7 +160,8 @@ MainApplication::MainApplication(int &argc, char** argv)
 
     if (argc > 1) {
         CommandLineOptions cmd;
-        foreach (const CommandLineOptions::ActionPair &pair, cmd.getActions()) {
+        const auto actions = cmd.getActions();
+        for (const CommandLineOptions::ActionPair &pair : actions) {
             switch (pair.action) {
             case Qz::CL_StartWithoutAddons:
                 noAddons = true;
@@ -255,7 +261,7 @@ MainApplication::MainApplication(int &argc, char** argv)
 
     if (isRunning()) {
         m_isClosing = true;
-        foreach (const QString &message, messages) {
+        for (const QString &message : qAsConst(messages)) {
             sendMessage(message);
         }
         return;
@@ -285,6 +291,15 @@ MainApplication::MainApplication(int &argc, char** argv)
 
     m_webProfile = isPrivate() ? new QWebEngineProfile() : QWebEngineProfile::defaultProfile();
     connect(m_webProfile, &QWebEngineProfile::downloadRequested, this, &MainApplication::downloadRequested);
+
+#if QTWEBENGINECORE_VERSION >= QT_VERSION_CHECK(5, 13, 0)
+    m_webProfile->setNotificationPresenter([&] (std::unique_ptr<QWebEngineNotification> notification) {
+        auto notifications = desktopNotifications();
+        notifications->showNotification(
+            QPixmap::fromImage(notification->icon()), notification->title(), notification->message()
+        );
+    });
+#endif
 
     m_networkManager = new NetworkManager(this);
 
@@ -457,7 +472,8 @@ void MainApplication::openSession(BrowserWindow* window, RestoreData &restoreDat
         window->restoreWindow(restoreData.windows.takeAt(0));
     }
 
-    foreach (const BrowserWindow::SavedWindow &data, restoreData.windows) {
+    const auto restoreWindows = restoreData.windows;
+    for (const BrowserWindow::SavedWindow &data : restoreWindows) {
         BrowserWindow* window = createWindow(Qz::BW_OtherRestoredWindow);
         window->restoreWindow(data);
     }
@@ -956,6 +972,10 @@ void MainApplication::loadSettings()
 
 #if QTWEBENGINEWIDGETS_VERSION >= QT_VERSION_CHECK(5, 12, 0)
     webSettings->setAttribute(QWebEngineSettings::DnsPrefetchEnabled, settings.value(QSL("DNSPrefetch"), true).toBool());
+#endif
+
+#if QTWEBENGINEWIDGETS_VERSION >= QT_VERSION_CHECK(5, 13, 0)
+    webSettings->setAttribute(QWebEngineSettings::PdfViewerEnabled, settings.value(QSL("intPDFViewer"), false).toBool());
 #endif
 
     webSettings->setDefaultTextEncoding(settings.value(QSL("DefaultEncoding"), webSettings->defaultTextEncoding()).toString());

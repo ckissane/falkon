@@ -242,15 +242,18 @@ QString PIM_Handler::matchingJsTable() const
     QHashIterator<PI_Type, QStringList> i(m_infoMatches);
     while (i.hasNext()) {
         i.next();
-        foreach (const QString &value, i.value()) {
+
+        const auto ivalues = i.value();
+        for (const QString &value : ivalues) {
             QString key = m_allInfo.value(i.key());
             key.replace(QL1C('"'), QL1S("\\\""));
             values.append(QSL("\"%1\":\"%2\",").arg(value, key));
         }
     }
 
-    if (!values.isEmpty())
+    if (!values.isEmpty()) {
         values = values.left(values.size() - 1);
+    }
 
     return QSL("{ %1 }").arg(values);
 }

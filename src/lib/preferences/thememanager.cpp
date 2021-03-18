@@ -27,6 +27,7 @@
 
 #include <QDir>
 #include <QMessageBox>
+#include <QtCoreVersion>
 
 ThemeManager::ThemeManager(QWidget* parent, Preferences* preferences)
     : QWidget(parent)
@@ -45,10 +46,10 @@ ThemeManager::ThemeManager(QWidget* parent, Preferences* preferences)
 
     const QStringList themePaths = DataPaths::allPaths(DataPaths::Themes);
 
-    foreach (const QString &path, themePaths) {
+    for (const QString &path : themePaths) {
         QDir dir(path);
-        QStringList list = dir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot);
-        foreach (const QString &name, list) {
+        const QStringList list = dir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot);
+        for (const QString &name : list) {
             Theme themeInfo = parseTheme(dir.absoluteFilePath(name) + QLatin1Char('/'), name);
             if (!themeInfo.isValid) {
                 continue;
@@ -137,8 +138,12 @@ ThemeManager::Theme ThemeManager::parseTheme(const QString &path, const QString 
     info.name = metadata.name();
     info.description = metadata.comment();
     info.author = metadata.value(QSL("X-Falkon-Author")).toString();
+#if QTCORE_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+    info.themePath = path.chopped(1);
+#else
     info.themePath = path;
     info.themePath.chop(1);
+#endif
 
     const QString iconName = metadata.icon();
     if (!iconName.isEmpty()) {
